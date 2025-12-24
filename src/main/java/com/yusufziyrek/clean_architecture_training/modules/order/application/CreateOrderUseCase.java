@@ -13,7 +13,7 @@ public class CreateOrderUseCase {
 		this.reduceStockUseCase = reduceStockUseCase;
 	}
 
-	public void execute(Long productId, Integer quantity) {
+	public Order execute(Long productId, Integer quantity) {
 		
 		// 1. ADIM: Product modülündeki UseCase'i çağır (Stok düş ve birim fiyatı al)
 		Double unitPrice = reduceStockUseCase.execute(productId, quantity);
@@ -23,5 +23,7 @@ public class CreateOrderUseCase {
 
 		// 3. ADIM: Siparişi kendi modülünde kaydet
 		orderRepository.save(order);
+		
+		return order;
 	}
 }
