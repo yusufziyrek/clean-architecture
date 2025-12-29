@@ -33,8 +33,10 @@ public class ProductPersistenceAdapter implements ProductRepository {
 	}
 
 	// ENTITY -> DOMAIN MAPPING
+	// reconstitute kullanılır çünkü veri veritabanından geliyor, validasyona gerek
+	// yok
 	private Product mapToDomain(ProductEntity entity) {
-		return new Product(entity.getId(), entity.getName(), entity.getPrice(), entity.getStock());
+		return Product.reconstitute(entity.getId(), entity.getName(), entity.getPrice(), entity.getStock());
 	}
 
 	// DOMAIN -> ENTITY MAPPING

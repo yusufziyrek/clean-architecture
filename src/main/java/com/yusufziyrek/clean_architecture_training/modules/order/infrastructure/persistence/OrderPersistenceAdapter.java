@@ -13,20 +13,20 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class OrderPersistenceAdapter implements OrderRepository {
-	private final JpaOrderRepository jpaRepo;
-    
+    private final JpaOrderRepository jpaRepo;
+
     public Optional<Order> findById(UUID id) {
         return jpaRepo.findById(id).map(this::mapToDomain);
     }
-    
+
     @Override
     public void save(Order order) {
         // Domain -> Entity dönüşümü ve kayıt
         OrderEntity entity = mapToEntity(order);
         jpaRepo.save(entity);
     }
-	
-	// Domain Modelini Veritabanı Entity'sine çevirir
+
+    // Domain Modelini Veritabanı Entity'sine çevirir
     private OrderEntity mapToEntity(Order order) {
         OrderEntity entity = new OrderEntity();
         entity.setId(order.getId());
@@ -37,13 +37,14 @@ public class OrderPersistenceAdapter implements OrderRepository {
     }
 
     // Veritabanı Entity'sini Domain Modeline çevirir
+    // reconstitute kullanılır çünkü veri veritabanından geliyor, validasyona gerek
+    // yok
     private Order mapToDomain(OrderEntity entity) {
-        return new Order(
-            entity.getId(),
-            entity.getProductId(),
-            entity.getQuantity(),
-            entity.getTotalPrice()
-        );
+        return Order.reconstitute(
+                entity.getId(),
+                entity.getProductId(),
+                entity.getQuantity(),
+                entity.getTotalPrice());
     }
 
 }

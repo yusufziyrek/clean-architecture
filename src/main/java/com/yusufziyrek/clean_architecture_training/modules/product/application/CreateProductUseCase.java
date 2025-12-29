@@ -11,9 +11,9 @@ public class CreateProductUseCase {
     }
 
     public Product execute(String name, Double price, Integer stock) {
-        // İŞ KURALI: Domain nesnesini oluştur
-        // ID null veriyoruz çünkü veritabanı oluşturacak (Auto Increment)
-        Product product = new Product(null, name, price, stock);
+        // İŞ KURALI: Domain nesnesini factory method ile oluştur
+        // Validasyonlar Product.create() içinde yapılır
+        Product product = Product.create(name, price, stock);
 
         productRepository.save(product);
 
