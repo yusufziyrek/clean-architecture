@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
 
@@ -53,7 +54,8 @@ public class ProductController {
 	}
 
 	@PostMapping("/{id}/reduce-stock")
-	public ProductStockResponse reduceStock(@PathVariable Long id, @RequestBody ReduceStockRequest request) {
+	public ProductStockResponse reduceStock(@PathVariable @NotNull(message = "ID cannot be null") Long id,
+			@RequestBody ReduceStockRequest request) {
 		Double price = reduceStockUseCase.execute(id, request.quantity());
 		return new ProductStockResponse(id, price);
 	}

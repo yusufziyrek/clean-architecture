@@ -48,6 +48,17 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    // Sipariş bulunamadı hatasını 404 Not Found'a çevir
+    @ExceptionHandler(com.yusufziyrek.clean_architecture_training.modules.order.domain.OrderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOrderNotFoundException(
+            com.yusufziyrek.clean_architecture_training.modules.order.domain.OrderNotFoundException ex) {
+        ErrorResponse error = new ErrorResponse(
+                ex.getMessage(),
+                ex.getCode(),
+                LocalDateTime.now());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
     // Validasyon hatalarını düzenli bir JSON olarak dön
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
