@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.yusufziyrek.clean_architecture_training.modules.order.domain.InvalidOrderQuantityException;
 import com.yusufziyrek.clean_architecture_training.modules.product.domain.InsufficientStockException;
+import com.yusufziyrek.clean_architecture_training.modules.product.domain.ProductNotFoundException;
 
 import java.time.LocalDateTime;
 
@@ -26,6 +27,16 @@ public class GlobalExceptionHandler {
     // Sipariş adedi hatalı hatayı 400 Bad Request'e çevir
     @ExceptionHandler(InvalidOrderQuantityException.class)
     public ResponseEntity<ErrorResponse> handleInvalidOrderQuantity(InvalidOrderQuantityException ex) {
+        ErrorResponse error = new ErrorResponse(
+                ex.getMessage(),
+                ex.getCode(),
+                LocalDateTime.now());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    // Ürün bulunamadı hatasını 400 Bad Request'e çevir
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleProductNotFoundException(ProductNotFoundException ex) {
         ErrorResponse error = new ErrorResponse(
                 ex.getMessage(),
                 ex.getCode(),

@@ -1,6 +1,7 @@
 package com.yusufziyrek.clean_architecture_training.modules.product.application;
 
 import com.yusufziyrek.clean_architecture_training.modules.product.domain.Product;
+import com.yusufziyrek.clean_architecture_training.modules.product.domain.ProductNotFoundException;
 import com.yusufziyrek.clean_architecture_training.modules.product.domain.ProductRepository;
 
 public class ReduceStockUseCase {
@@ -12,7 +13,7 @@ public class ReduceStockUseCase {
 
 	public Double execute(Long productId, Integer quantity) {
 		Product product = productRepository.findById(productId)
-				.orElseThrow(() -> new RuntimeException("Ürün bulunamadı."));
+				.orElseThrow(() -> new ProductNotFoundException(productId));
 
 		product.reduceStock(quantity); // Domain kendi iş kuralını uyguluyor
 		productRepository.save(product);
