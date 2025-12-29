@@ -14,13 +14,13 @@ public class Order {
 
     // İş Kuralı: Siparişi oluşturuyoruz.
     public static Order create(Long productId, Integer quantity, Double unitPrice) {
-        if (quantity <= 0) throw new RuntimeException("Adet 0'dan büyük olmalı.");
-        
+        if (quantity <= 0)
+            throw new InvalidOrderQuantityException(quantity);
+
         return new Order(
-            UUID.randomUUID(), 
-            productId, 
-            quantity, 
-            quantity * unitPrice
-        );
+                UUID.randomUUID(),
+                productId,
+                quantity,
+                quantity * unitPrice);
     }
 }
