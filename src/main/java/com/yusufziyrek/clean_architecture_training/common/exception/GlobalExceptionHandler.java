@@ -7,79 +7,84 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.yusufziyrek.clean_architecture_training.modules.order.domain.InvalidOrderQuantityException;
-import com.yusufziyrek.clean_architecture_training.modules.product.domain.InsufficientStockException;
-import com.yusufziyrek.clean_architecture_training.modules.product.domain.ProductNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestControllerAdvice // Tüm controller hatalarını dinler
+/**
+ * Global Exception Handler - Tüm controller hatalarını yakalar.
+ * 
+ * Clean Architecture Prensibi: Bu sınıf SADECE common paketindeki
+ * BaseException'a bağımlıdır. Modül-specific exception'ları bilmez.
+ * Bu sayede yeni modül veya exception eklendiğinde bu dosya değişmez.
+ */
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Stok yetersiz hatasını 400 Bad Request'e çevir
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<ErrorResponse> handleInsufficientStock(InsufficientStockException ex) {
+    /**
+     * TÜM Domain Exception'ları yakalar (BaseException'dan türeyen).
+     * HTTP status, exception code'una göre belirlenir.
+     */
+    @ExceptionHandler(BaseException.class)
+    public ResponseEntity<ErrorResponse> handleDomainException(BaseException ex) {
+        HttpStatus status = determineHttpStatus(ex.getCode());
+
         ErrorResponse error = new ErrorResponse(
                 ex.getMessage(),
                 ex.getCode(),
                 LocalDateTime.now());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+
+        return new ResponseEntity<>(error, status);
     }
 
-    // Sipariş adedi hatalı hatayı 400 Bad Request'e çevir
-    @ExceptionHandler(InvalidOrderQuantityException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidOrderQuantity(InvalidOrderQuantityException ex) {
-        ErrorResponse error = new ErrorResponse(
-                ex.getMessage(),
-                ex.getCode(),
-                LocalDateTime.now());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    /**
+     * Exception code'una göre uygun HTTP status döndürür.
+     * Yeni exception eklendiğinde sadece naming convention'a uyulmalı.
+     */
+    private HttpStatus determineHttpStatus(String code) {
+        if (code == null) {
+            return HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        // NOT_FOUND içeren kodlar için 404
+        if (code.contains("NOT_FOUND")) {
+            return HttpStatus.NOT_FOUND;
+        }
+
+        // INVALID, INSUFFICIENT gibi iş kuralı ihlalleri için 400
+        if (code.contains("INVALID") || code.contains("INSUFFICIENT")) {
+            return HttpStatus.BAD_REQUEST;
+        }
+
+        // Varsayılan: 400 Bad Request
+        return HttpStatus.BAD_REQUEST;
     }
 
-    // Ürün bulunamadı hatasını 400 Bad Request'e çevir
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleProductNotFoundException(ProductNotFoundException ex) {
-        ErrorResponse error = new ErrorResponse(
-                ex.getMessage(),
-                ex.getCode(),
-                LocalDateTime.now());
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-    }
-
-    // Sipariş bulunamadı hatasını 404 Not Found'a çevir
-    @ExceptionHandler(com.yusufziyrek.clean_architecture_training.modules.order.domain.OrderNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleOrderNotFoundException(
-            com.yusufziyrek.clean_architecture_training.modules.order.domain.OrderNotFoundException ex) {
-        ErrorResponse error = new ErrorResponse(
-                ex.getMessage(),
-                ex.getCode(),
-                LocalDateTime.now());
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-    }
-
-    // Validasyon hatalarını düzenli bir JSON olarak dön
+    /**
+     * Bean Validation hatalarını yakalar (@Valid anotasyonu).
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
-        // Hataları topla: Field -> ErrorMessage
         Map<String, String> validationErrors = new HashMap<>();
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             validationErrors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
 
         ErrorResponse error = new ErrorResponse(
-                "Validation error: " + validationErrors.toString(),
+                "Validation error: " + validationErrors,
                 "VALIDATION_ERROR",
                 LocalDateTime.now());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // PathVariable/RequestParam validasyon hatalarını
-    // (ConstraintViolationException) yakala
-    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    /**
+     * PathVariable/RequestParam validasyon hatalarını yakalar.
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(
-            jakarta.validation.ConstraintViolationException ex) {
+            ConstraintViolationException ex) {
         ErrorResponse error = new ErrorResponse(
                 "Validation error: " + ex.getMessage(),
                 "VALIDATION_ERROR",
@@ -87,7 +92,9 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
-    // Bilinmeyen tüm hataları 500 Internal Server Error'a çevir
+    /**
+     * Beklenmeyen tüm hataları yakalar (fallback).
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(Exception ex) {
         ErrorResponse error = new ErrorResponse(
