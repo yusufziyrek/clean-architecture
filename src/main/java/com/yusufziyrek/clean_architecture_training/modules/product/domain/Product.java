@@ -12,10 +12,10 @@ public class Product {
 	private Integer stock;
 
 	// İŞ KURALI: Ürün kendi stoğunu yönetir.
-	// Dışarıdaki bir servis bu if'i yazamaz, bu nesneye sormalıdır.
+	// Dışarıdaki bir servis bu if'i yazamaz, bunu nesneye sormalıdır.
 	public void reduceStock(int quantity) {
 		if (this.stock < quantity) {
-			throw new RuntimeException("Stok yetersiz! Mevcut: " + this.stock);
+			throw new InsufficientStockException(this.name);
 		}
 		this.stock -= quantity;
 	}
