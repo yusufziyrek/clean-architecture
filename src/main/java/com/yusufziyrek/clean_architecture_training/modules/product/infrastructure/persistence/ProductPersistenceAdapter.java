@@ -1,5 +1,6 @@
 package com.yusufziyrek.clean_architecture_training.modules.product.infrastructure.persistence;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
@@ -17,6 +18,13 @@ public class ProductPersistenceAdapter implements ProductRepository {
 	@Override
 	public Optional<Product> findById(Long id) {
 		return jpaRepo.findById(id).map(this::mapToDomain);
+	}
+
+	@Override
+	public List<Product> findAll() {
+		return jpaRepo.findAll().stream()
+				.map(this::mapToDomain)
+				.toList();
 	}
 
 	@Override

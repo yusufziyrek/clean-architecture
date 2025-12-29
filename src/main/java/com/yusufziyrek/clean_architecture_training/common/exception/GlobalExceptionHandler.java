@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 ex.getCode(),
                 LocalDateTime.now());
-        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
     // Bilinmeyen tüm hataları 500 Internal Server Error'a çevir
