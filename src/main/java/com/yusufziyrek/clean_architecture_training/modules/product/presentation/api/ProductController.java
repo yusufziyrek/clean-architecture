@@ -16,9 +16,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import org.springframework.validation.annotation.Validated;
+
 @RestController
 @RequestMapping("/api/products")
 @RequiredArgsConstructor
+@Validated
 public class ProductController {
 
 	private final ReduceStockUseCase reduceStockUseCase;
@@ -27,13 +32,14 @@ public class ProductController {
 	private final ListProductsUseCase listProductsUseCase;
 
 	@PostMapping
-	public ResponseEntity<ProductResponse> createProduct(@RequestBody CreateProductRequest request) {
+	public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody CreateProductRequest request) {
 		Product product = createProductUseCase.execute(request.name(), request.price(), request.stock());
 		return new ResponseEntity<>(ProductResponse.fromDomain(product), HttpStatus.CREATED);
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
+	public ResponseEntity<ProductResponse> getProductById(
+			@PathVariable @Positive(message = "ID must be positive") Long id) {
 		Product product = getProductByIdUseCase.execute(id);
 		return ResponseEntity.ok(ProductResponse.fromDomain(product));
 	}

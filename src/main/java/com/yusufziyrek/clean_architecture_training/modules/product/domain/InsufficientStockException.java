@@ -4,6 +4,6 @@ import com.yusufziyrek.clean_architecture_training.common.exception.BaseExceptio
 
 public class InsufficientStockException extends BaseException {
 	public InsufficientStockException(String productName) {
-		super(productName + " için stok yetersiz!", "PRODUCT_STOCK_INSUFFICIENT");
+		super("Insufficient stock for " + productName, "PRODUCT_STOCK_INSUFFICIENT");
 	}
 }

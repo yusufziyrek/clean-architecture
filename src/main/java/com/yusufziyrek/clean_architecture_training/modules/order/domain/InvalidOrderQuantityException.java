@@ -4,6 +4,6 @@ import com.yusufziyrek.clean_architecture_training.common.exception.BaseExceptio
 
 public class InvalidOrderQuantityException extends BaseException {
     public InvalidOrderQuantityException(Integer wrongQuantity) {
-        super("Sipariş adedi en az 1 olmalıdır. Girilen: " + wrongQuantity, "ORDER_QUANTITY_INVALID");
+        super("Order quantity must be at least 1. Provided: " + wrongQuantity, "ORDER_QUANTITY_INVALID");
     }
 }

@@ -4,6 +4,6 @@ import com.yusufziyrek.clean_architecture_training.common.exception.BaseExceptio
 
 public class ProductNotFoundException extends BaseException {
     public ProductNotFoundException(Long id) {
-        super("Ürün bulunamadı. ID: " + id, "PRODUCT_NOT_FOUND");
+        super("Product not found. ID: " + id, "PRODUCT_NOT_FOUND");
     }
 }
