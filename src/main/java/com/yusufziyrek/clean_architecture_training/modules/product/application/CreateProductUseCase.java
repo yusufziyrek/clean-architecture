@@ -15,8 +15,6 @@ public class CreateProductUseCase {
         // Validasyonlar Product.create() içinde yapılır
         Product product = Product.create(name, price, stock);
 
-        productRepository.save(product);
-
-        return product;
+        return productRepository.save(product);
     }
 }

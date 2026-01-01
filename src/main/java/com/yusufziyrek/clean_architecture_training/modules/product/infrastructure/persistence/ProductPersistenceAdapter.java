@@ -28,8 +28,11 @@ public class ProductPersistenceAdapter implements ProductRepository {
 	}
 
 	@Override
-	public void save(Product p) {
-		jpaRepo.save(mapToEntity(p));
+	public Product save(Product p) {
+		// Entity'ye çevir, kaydet, sonra tekrar domain'e çevir
+		// JPA save() kaydedilen entity'yi döner (ID dahil)
+		ProductEntity savedEntity = jpaRepo.save(mapToEntity(p));
+		return mapToDomain(savedEntity);
 	}
 
 	// ENTITY -> DOMAIN MAPPING

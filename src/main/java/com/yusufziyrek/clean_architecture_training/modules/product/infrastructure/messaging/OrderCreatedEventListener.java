@@ -44,22 +44,22 @@ public class OrderCreatedEventListener {
      */
     @RabbitListener(queues = RabbitMQConfig.STOCK_RESERVE_QUEUE)
     public void consume(String message) {
-        log.info("📦 Received message from queue: {}", message);
+        log.info("Received message from queue: {}", message);
 
         try {
             // JSON String'i Java nesnesine çevir
             OrderCreatedEventPayload event = objectMapper.readValue(message, OrderCreatedEventPayload.class);
 
-            log.info("📦 Parsed OrderCreatedEvent: orderId={}, productId={}, quantity={}",
+            log.info("Parsed OrderCreatedEvent: orderId={}, productId={}, quantity={}",
                     event.orderId(), event.productId(), event.quantity());
 
             // Stok düşür
             reduceStockUseCase.execute(event.productId(), event.quantity());
 
-            log.info("✅ Stock reduced successfully for productId={}", event.productId());
+            log.info("Stock reduced successfully for productId={}", event.productId());
 
         } catch (Exception e) {
-            log.error("❌ Failed to process message: {}", e.getMessage(), e);
+            log.error("Failed to process message: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to process order created event", e);
         }
     }
