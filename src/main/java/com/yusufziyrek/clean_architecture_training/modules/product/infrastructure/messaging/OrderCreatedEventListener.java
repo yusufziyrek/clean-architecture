@@ -3,6 +3,9 @@ package com.yusufziyrek.clean_architecture_training.modules.product.infrastructu
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.yusufziyrek.clean_architecture_training.infrastructure.messaging.RabbitMQConfig;
 import com.yusufziyrek.clean_architecture_training.modules.product.application.ReduceStockUseCase;
 
@@ -13,18 +16,12 @@ import lombok.extern.slf4j.Slf4j;
  * Order Created Event Listener - RabbitMQ'dan gelen event'leri dinler.
  * 
  * BU SINIF NE YAPAR?
- * 1. RabbitMQ'dan "order.created" event'ini alır
- * 2. ReduceStockUseCase'i çağırarak stok düşürür
+ * 1. RabbitMQ'dan "order.created" event'ini alır (String JSON olarak)
+ * 2. JSON'ı parse eder
+ * 3. ReduceStockUseCase'i çağırarak stok düşürür
  * 
- * RABBITMQ LISTENER NASIL ÇALIŞIR?
- * - @RabbitListener anotasyonu ile kuyruk dinlenir
- * - Mesaj geldiğinde otomatik olarak consume() metodu çağrılır
- * - Mesaj JSON'dan Java nesnesine dönüştürülür (Jackson)
- * 
- * ASENKRON İŞLEM:
- * - Order modülü event yayınladı ve işini bitirdi
- * - Bu listener ayrı bir thread'de çalışır
- * - Order yanıtı beklemeden Product stok işlemini yapar
+ * NOT: Outbox pattern'de mesaj String JSON olarak gönderildiği için
+ * bu listener String alıp manuel parse ediyor.
  */
 @Component
 @RequiredArgsConstructor
@@ -33,28 +30,37 @@ public class OrderCreatedEventListener {
 
     private final ReduceStockUseCase reduceStockUseCase;
 
+    // JSON dönüşümü için ObjectMapper
+    private final ObjectMapper objectMapper = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
     /**
      * Order Created Event Handler
      * 
      * @RabbitListener: Belirtilen kuyruktan mesaj dinler
-     *                  Bu metod her yeni mesaj geldiğinde otomatik çağrılır
+     *                  Mesaj String olarak gelir (Outbox'tan JSON string
+     *                  gönderildiği için)
      */
     @RabbitListener(queues = RabbitMQConfig.STOCK_RESERVE_QUEUE)
-    public void consume(OrderCreatedEventPayload event) {
-        log.info("📦 Received OrderCreatedEvent: orderId={}, productId={}, quantity={}",
-                event.orderId(), event.productId(), event.quantity());
+    public void consume(String message) {
+        log.info("📦 Received message from queue: {}", message);
 
         try {
+            // JSON String'i Java nesnesine çevir
+            OrderCreatedEventPayload event = objectMapper.readValue(message, OrderCreatedEventPayload.class);
+
+            log.info("📦 Parsed OrderCreatedEvent: orderId={}, productId={}, quantity={}",
+                    event.orderId(), event.productId(), event.quantity());
+
             // Stok düşür
             reduceStockUseCase.execute(event.productId(), event.quantity());
 
             log.info("✅ Stock reduced successfully for productId={}", event.productId());
 
         } catch (Exception e) {
-            log.error("❌ Failed to reduce stock for productId={}: {}",
-                    event.productId(), e.getMessage());
-            // TODO: Dead Letter Queue veya retry mekanizması eklenebilir
-            throw e; // Mesaj tekrar kuyruğa alınsın
+            log.error("❌ Failed to process message: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to process order created event", e);
         }
     }
 }

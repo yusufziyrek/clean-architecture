@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.yusufziyrek.clean_architecture_training.common.event.DomainEvent;
 import com.yusufziyrek.clean_architecture_training.common.event.DomainEventPublisher;
@@ -19,7 +20,7 @@ import lombok.RequiredArgsConstructor;
  * 
  * BU SINIF NE YAPAR?
  * 1. Event'i alır
- * 2. JSON'a çevirir
+ * 2. JSON'a çevirir (ISO 8601 formatında tarihler)
  * 3. Outbox tablosuna kaydeder
  * 
  * NOT: RabbitMQ'ya göndermez! Scheduler ayrıca gönderir.
@@ -32,13 +33,15 @@ public class OutboxEventPublisher implements DomainEventPublisher {
     private final OutboxRepository outboxRepository;
 
     // JSON dönüşümü için ObjectMapper
+    // WRITE_DATES_AS_TIMESTAMPS: false = ISO 8601 string format
     private final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
     @Override
     public void publish(DomainEvent event) {
         try {
-            // Event'i JSON string'e çevir
+            // Event'i JSON string'e çevir (tarihler ISO 8601 formatında)
             String payload = objectMapper.writeValueAsString(event);
 
             // Outbox tablosuna kaydet (aynı transaction'da!)
